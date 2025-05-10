@@ -20,7 +20,7 @@ namespace DungeonCrawl
 
 		static void Main(string[] args)
 		{
-			List<Monster> monsters = null;
+            List<Monster> monsters = null;
 			List<Item> items = null;
 			PlayerCharacter player = null;
 			Map currentLevel = null;
@@ -29,8 +29,11 @@ namespace DungeonCrawl
 			List<int> dirtyTiles = new List<int>();
 			List<string> messages = new List<string>();
 
-			// Main loop
-			GameState state = GameState.CharacterCreation;
+            Trader trader = new Trader();
+            int currentLevelNumber = 1;
+
+            // Main loop
+            GameState state = GameState.CharacterCreation;
 			while (state != GameState.Quit)
 			{
 				switch (state)
@@ -83,15 +86,24 @@ namespace DungeonCrawl
 							}
 							else if (result == PlayerTurnResult.NextLevel)
 							{
-								currentLevel = Map.CreateMap(random);
+                                currentLevelNumber++;
+                                currentLevel = Map.CreateMap(random);
 								monsters = CreateEnemies(currentLevel, random);
 								items = CreateItems(currentLevel, random);
 								Map.PlacePlayerToMap(player, currentLevel);
 								Map.PlaceStairsToMap(currentLevel);
-								Console.Clear();
+                                trader.RestockInventory(random, currentLevelNumber);
+                                Console.Clear();
 								break;
 							}
-						}
+                            else if (result == PlayerTurnResult.OpenTrader)
+                            {
+                                Console.Clear();
+                                state = GameState.Trader;
+                                break;
+                            }
+
+                        }
                         // Either do computer turn or wait command again
                         // Do computer turn
                         // Process enemies
@@ -140,7 +152,32 @@ namespace DungeonCrawl
 							}
 						}
 						break;
-				};
+                    case GameState.Trader:
+                        Console.Clear();
+                        trader.DisplayInventory();
+                        Console.WriteLine("Enter the number of the item you want to buy, or press 'B' to go back.");
+                        string input = Console.ReadLine();
+
+                        if (input.ToLower() == "b")
+                        {
+                            state = GameState.GameLoop;
+                            break;
+                        }
+
+                        if (int.TryParse(input, out int itemIndex))
+                        {
+                            trader.BuyItem(player, itemIndex - 1, messages);
+                        }
+                        else
+                        {
+                            messages.Add("Invalid input.");
+                        }
+
+                        DrawInfo(player, monsters, items, messages);
+                        break;
+
+                }
+                ;
 			}
 			Console.ResetColor();
 			Console.Clear();
@@ -338,17 +375,20 @@ namespace DungeonCrawl
 			Print("@", ConsoleColor.White);
 		}
 
-		static void DrawCommands()
-		{
-			int cx = Console.WindowWidth - COMMANDS_WIDTH + 1;
-			int ln = 1;
-			Console.SetCursorPosition(cx, ln); ln++;
-			Print(":Commands:", ConsoleColor.Yellow);
-			Console.SetCursorPosition(cx, ln); ln++;
-			Print("I", ConsoleColor.Cyan); Print("nventory", ConsoleColor.White);
-		}
+        static void DrawCommands()
+        {
+            int cx = Console.WindowWidth - COMMANDS_WIDTH + 1;
+            int ln = 1;
+            Console.SetCursorPosition(cx, ln); ln++;
+            Print(":Commands:", ConsoleColor.Yellow);
+            Console.SetCursorPosition(cx, ln); ln++;
+            Print("I", ConsoleColor.Cyan); Print("nventory", ConsoleColor.White);
+            Console.SetCursorPosition(cx, ln); ln++;
+            Print("T", ConsoleColor.Cyan); Print("rader", ConsoleColor.White);
+        }
 
-		static void DrawInfo(PlayerCharacter player, List<Monster> enemies, List<Item> items, List<string> messages)
+
+        static void DrawInfo(PlayerCharacter player, List<Monster> enemies, List<Item> items, List<string> messages)
 		{
 			int infoLine1 = Console.WindowHeight - INFO_HEIGHT;
 			Console.SetCursorPosition(0, infoLine1);
@@ -521,9 +561,14 @@ namespace DungeonCrawl
 				{
 					return PlayerTurnResult.OpenInventory;
 				}
-			}
+                else if (key.Key == ConsoleKey.T)
+                {
+                    return PlayerTurnResult.OpenTrader;
+                }
 
-			int startTile = Map.PositionToTileIndex(character.position, level);
+            }
+
+            int startTile = Map.PositionToTileIndex(character.position, level);
 			Vector2 destinationPlace = character.position + playerMove;
 
 			if (DoPlayerTurnVsEnemies(character, enemies, destinationPlace, messages))

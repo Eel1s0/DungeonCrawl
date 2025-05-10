@@ -1,13 +1,9 @@
-﻿using System;
-
-namespace DungeonCrawl
+enum PlayerTurnResult
 {
-    enum PlayerTurnResult
-    {
-        TurnOver,
-        NewTurn,
-        OpenInventory,
-        NextLevel,
-        BackToGame
-    }
+    TurnOver,
+    NewTurn,
+    OpenInventory,
+    OpenTrader,
+    NextLevel,
+    BackToGame
 }

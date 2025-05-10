@@ -1,14 +1,9 @@
-﻿using System;
-
-namespace DungeonCrawl
+enum GameState
 {
-    enum GameState
-    {
-        CharacterCreation,
-        GameLoop,
-        Inventory,
-        DeathScreen,
-        Quit
-    }
+    CharacterCreation,
+    GameLoop,
+    Inventory,
+    Trader,
+    DeathScreen,
+    Quit
 }
-
