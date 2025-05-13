@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 
@@ -14,6 +15,7 @@ namespace DungeonCrawl
         public int gold;
         public Vector2 position;
         public List<Item> inventory;
+        public List<Quest> ActiveQuests { get; set; } = new List<Quest>();
 
         public static PlayerCharacter CreateCharacter()
         {

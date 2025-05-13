@@ -44,6 +44,7 @@ namespace DungeonCrawl
 					case GameState.CharacterCreation:
                         // Character creation screen
                         player = PlayerCharacter.CreateCharacter();
+                        InitializeQuests(player);
                         Console.CursorVisible = false;
 						Console.Clear();
 
@@ -451,6 +452,8 @@ namespace DungeonCrawl
             Print("I", ConsoleColor.Cyan); Print("nventory", ConsoleColor.White);
             Console.SetCursorPosition(cx, ln); ln++;
             Print("T", ConsoleColor.Cyan); Print("rader", ConsoleColor.White);
+            Console.SetCursorPosition(cx, ln); ln++;
+            Print("Q", ConsoleColor.Cyan); Print("uests", ConsoleColor.White);
         }
 
 
@@ -531,11 +534,55 @@ namespace DungeonCrawl
 			return PlayerTurnResult.BackToGame;
 		}
 
+        static void ManageQuests(PlayerCharacter player, List<string> messages)
+        {
+            Console.Clear();
+            Console.WriteLine("Quests:");
+            for (int i = 0; i < player.ActiveQuests.Count; i++)
+            {
+                Quest quest = player.ActiveQuests[i];
+                string status = quest.IsCompleted ? "Completed" : $"Progress: {quest.Progress}/{quest.Goal}";
+                Console.WriteLine($"{i + 1}. {quest.Description} - {status}");
+            }
+
+            Console.WriteLine("\nPress the number of a completed quest to claim its reward, or press 'B' to go back.");
+            string input = Console.ReadLine();
+
+            if (input.ToLower() == "b")
+            {
+                return;
+            }
+
+            if (int.TryParse(input, out int questIndex) && questIndex > 0 && questIndex <= player.ActiveQuests.Count)
+            {
+                Quest selectedQuest = player.ActiveQuests[questIndex - 1];
+                if (selectedQuest.IsCompleted)
+                {
+                    selectedQuest.GiveReward(player);
+                    messages.Add($"You claimed the reward for: {selectedQuest.Description}");
+                    player.ActiveQuests.RemoveAt(questIndex - 1);
+                }
+                else
+                {
+                    messages.Add("This quest is not yet completed.");
+                }
+            }
+            else
+            {
+                messages.Add("Invalid input.");
+            }
+        }
+
+        static void InitializeQuests(PlayerCharacter player)
+        {
+            player.ActiveQuests.Add(new Quest("Defeat 5 Goblins", 5, p => p.gold += 50));
+            player.ActiveQuests.Add(new Quest("Collect 3 Potions", 3, p => p.hitpoints += 10));
+        }
+
 
 
         static bool DoPlayerTurnVsEnemies(PlayerCharacter character, List<Monster> enemies, Vector2 destinationPlace, List<string> messages)
         {
-            // Check enemies
             bool hitEnemy = false;
             Monster toRemoveMonster = null;
             foreach (Monster enemy in enemies)
@@ -543,19 +590,27 @@ namespace DungeonCrawl
                 if (enemy.position == destinationPlace)
                 {
                     int damage = PlayerCharacter.GetCharacterDamage(character);
-                    messages.Add($" You hit {enemy.name} for {damage} damage!");
+                    messages.Add($"You hit {enemy.name} for {damage} damage!");
                     enemy.hitpoints -= damage;
                     hitEnemy = true;
 
                     if (enemy.hitpoints > 0)
                     {
-                        // Add a message showing the enemy's remaining health
-                        messages.Add($" {enemy.name} has {enemy.hitpoints} HP left.");
+                        messages.Add($"{enemy.name} has {enemy.hitpoints} HP left.");
                     }
                     else
                     {
                         toRemoveMonster = enemy;
-                        messages.Add($" You killed {enemy.name}!");
+                        messages.Add($"You killed {enemy.name}!");
+
+                        // Update quest progress
+                        foreach (Quest quest in character.ActiveQuests)
+                        {
+                            if (quest.Description.Contains("Defeat") && quest.Description.Contains(enemy.name))
+                            {
+                                quest.UpdateProgress(1);
+                            }
+                        }
                     }
                 }
             }
@@ -565,6 +620,7 @@ namespace DungeonCrawl
             }
             return hitEnemy;
         }
+
 
         static bool DoPlayerTurnVsItems(PlayerCharacter character, List<Item> items, Vector2 destinationPlace, List<string> messages)
 		{
@@ -637,6 +693,11 @@ namespace DungeonCrawl
                 else if (key.Key == ConsoleKey.T)
                 {
                     return PlayerTurnResult.OpenTrader;
+                }
+                else if (key.Key == ConsoleKey.Q) // New quest command
+                {
+                    ManageQuests(character, messages);
+                    return PlayerTurnResult.NewTurn; // Return to the game loop after managing quests
                 }
 
             }
