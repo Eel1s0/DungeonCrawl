@@ -32,6 +32,9 @@ namespace DungeonCrawl
             Trader trader = new Trader();
             int currentLevelNumber = 1;
 
+            // Initialize the trader's inventory for the first level
+            trader.RestockInventory(random, currentLevelNumber);
+
             // Main loop
             GameState state = GameState.CharacterCreation;
 			while (state != GameState.Quit)
@@ -84,7 +87,13 @@ namespace DungeonCrawl
 								state = GameState.Inventory;
 								break;
 							}
-							else if (result == PlayerTurnResult.NextLevel)
+                            else if (result == PlayerTurnResult.OpenTrader)
+                            {
+                                Console.Clear();
+                                state = GameState.Trader;
+                                break;
+                            }
+                            else if (result == PlayerTurnResult.NextLevel)
 							{
                                 currentLevelNumber++;
                                 currentLevel = Map.CreateMap(random);
@@ -96,12 +105,7 @@ namespace DungeonCrawl
                                 Console.Clear();
 								break;
 							}
-                            else if (result == PlayerTurnResult.OpenTrader)
-                            {
-                                Console.Clear();
-                                state = GameState.Trader;
-                                break;
-                            }
+
 
                         }
                         // Either do computer turn or wait command again
@@ -143,7 +147,9 @@ namespace DungeonCrawl
 							if (answer.Key == ConsoleKey.Y)
 							{
 								state = GameState.CharacterCreation;
-								break;
+                                currentLevelNumber = 1; // Reset the level number
+                                trader.RestockInventory(random, currentLevelNumber); // Reset trader inventory
+                                break;
 							}
 							else if (answer.Key == ConsoleKey.N)
 							{
@@ -154,27 +160,68 @@ namespace DungeonCrawl
 						break;
                     case GameState.Trader:
                         Console.Clear();
-                        trader.DisplayInventory();
-                        Console.WriteLine("Enter the number of the item you want to buy, or press 'B' to go back.");
-                        string input = Console.ReadLine();
+                        Console.WriteLine("Welcome to the Trader!");
+                        Console.WriteLine("1. Buy items");
+                        Console.WriteLine("2. Sell items");
+                        Console.WriteLine("Press 'B' to go back.");
+                        string traderInput = Console.ReadLine();
 
-                        if (input.ToLower() == "b")
+                        if (traderInput.ToLower() == "b")
                         {
                             state = GameState.GameLoop;
                             break;
                         }
 
-                        if (int.TryParse(input, out int itemIndex))
+                        if (traderInput == "1")
                         {
-                            trader.BuyItem(player, itemIndex - 1, messages);
+                            trader.DisplayInventory();
+                            Console.WriteLine("Enter the number of the item you want to buy, or press 'B' to go back.");
+                            string input = Console.ReadLine();
+
+                            if (input.ToLower() == "b")
+                            {
+                                break;
+                            }
+
+                            if (int.TryParse(input, out int itemIndex))
+                            {
+                                trader.BuyItem(player, itemIndex - 1, messages);
+                            }
+                            else
+                            {
+                                messages.Add("Invalid input.");
+                            }
                         }
-                        else
+                        else if (traderInput == "2")
                         {
-                            messages.Add("Invalid input.");
+                            Console.Clear();
+                            Console.WriteLine("Your Inventory:");
+                            for (int i = 0; i < player.inventory.Count; i++)
+                            {
+                                Item item = player.inventory[i];
+                                Console.WriteLine($"{i + 1}. {item.name} ({item.type}) - Sell for {item.quality / 2} gold");
+                            }
+                            Console.WriteLine("Enter the number of the item you want to sell, or press 'B' to go back.");
+                            string input = Console.ReadLine();
+
+                            if (input.ToLower() == "b")
+                            {
+                                break;
+                            }
+
+                            if (int.TryParse(input, out int itemIndex))
+                            {
+                                trader.SellItem(player, itemIndex - 1, messages);
+                            }
+                            else
+                            {
+                                messages.Add("Invalid input.");
+                            }
                         }
 
                         DrawInfo(player, monsters, items, messages);
                         break;
+
 
                 }
                 ;

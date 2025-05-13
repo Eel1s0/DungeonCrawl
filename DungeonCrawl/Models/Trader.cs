@@ -6,6 +6,7 @@ namespace DungeonCrawl
 {
     internal class Trader
     {
+        public const int MaxInventorySize = 10; // Maximum number of items the trader can hold
         public List<Item> Inventory { get; private set; }
 
         public Trader()
@@ -15,8 +16,14 @@ namespace DungeonCrawl
 
         public void RestockInventory(Random random, int level)
         {
-            Inventory.Clear();
-            int numberOfItems = random.Next(3, 6);
+            // Only restock if there's room in the inventory
+            int availableSlots = MaxInventorySize - Inventory.Count;
+            if (availableSlots <= 0)
+            {
+                return; // Inventory is full, no restocking
+            }
+
+            int numberOfItems = random.Next(1, Math.Min(availableSlots, 6)); // Add up to the available slots
 
             for (int i = 0; i < numberOfItems; i++)
             {
@@ -26,10 +33,9 @@ namespace DungeonCrawl
             }
         }
 
-
         public void DisplayInventory()
         {
-            Console.WriteLine("Welcome to the Trader! Here are the items available for purchase:");
+            Console.WriteLine("Trader's Inventory:");
             for (int i = 0; i < Inventory.Count; i++)
             {
                 Item item = Inventory[i];
@@ -59,6 +65,29 @@ namespace DungeonCrawl
                 messages.Add("You don't have enough gold to buy this item.");
                 return false;
             }
+        }
+
+        public bool SellItem(PlayerCharacter player, int itemIndex, List<string> messages)
+        {
+            if (itemIndex < 0 || itemIndex >= player.inventory.Count)
+            {
+                messages.Add("Invalid item selection.");
+                return false;
+            }
+
+            if (Inventory.Count >= MaxInventorySize)
+            {
+                messages.Add("The trader's inventory is full. You cannot sell this item.");
+                return false;
+            }
+
+            Item item = player.inventory[itemIndex];
+            int sellPrice = item.quality / 2; // Trader buys items for half their quality value
+            player.gold += sellPrice;
+            Inventory.Add(item); // Add the item to the trader's inventory
+            player.inventory.RemoveAt(itemIndex); // Remove the item from the player's inventory
+            messages.Add($"You sold {item.name} for {sellPrice} gold.");
+            return true;
         }
     }
 }
