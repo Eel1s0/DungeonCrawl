@@ -352,28 +352,29 @@ namespace DungeonCrawl
 			}
 			
 		}
-		static List<Monster> CreateEnemies(Map level, Random random)
-		{
-			List<Monster> monsters = new List<Monster>();
+        static List<Monster> CreateEnemies(Map level, Random random)
+        {
+            List<Monster> monsters = new List<Monster>();
 
-			for (int y = 0; y < level.height; y++)
-			{
-				for (int x = 0; x < level.width; x++)
-				{
-					int ti = y * level.width + x;
-					if (level.Tiles[ti] == Map.Tile.Monster)
-					{
+            for (int y = 0; y < level.height; y++)
+            {
+                for (int x = 0; x < level.width; x++)
+                {
+                    int ti = y * level.width + x;
+                    if (level.Tiles[ti] == Map.Tile.Monster)
+                    {
                         Monster m = Monster.CreateRandomMonster(random, new Vector2(x, y));
                         monsters.Add(m);
-						level.Tiles[ti] = (sbyte)Map.Tile.Floor;
-					}
-				}
-			}
-			return monsters;
-		}
+                        level.Tiles[ti] = (sbyte)Map.Tile.Floor;
+                    }
+                }
+            }
+            return monsters;
+        }
 
-		
-		static List<Item> CreateItems(Map level, Random random)
+
+
+        static List<Item> CreateItems(Map level, Random random)
 		{
 			List<Item> items = new List<Item>();
 
@@ -542,19 +543,19 @@ namespace DungeonCrawl
                 if (enemy.position == destinationPlace)
                 {
                     int damage = PlayerCharacter.GetCharacterDamage(character);
-                    messages.Add($"You hit {enemy.name} for {damage} damage!");
+                    messages.Add($" You hit {enemy.name} for {damage} damage!");
                     enemy.hitpoints -= damage;
                     hitEnemy = true;
 
                     if (enemy.hitpoints > 0)
                     {
                         // Add a message showing the enemy's remaining health
-                        messages.Add($"{enemy.name} has {enemy.hitpoints} HP left.");
+                        messages.Add($" {enemy.name} has {enemy.hitpoints} HP left.");
                     }
                     else
                     {
                         toRemoveMonster = enemy;
-                        messages.Add($"You killed {enemy.name}!");
+                        messages.Add($" You killed {enemy.name}!");
                     }
                 }
             }
