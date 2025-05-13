@@ -26,13 +26,14 @@ namespace DungeonCrawl
             ItemType type = Enum.GetValues<ItemType>()[random.Next(4)];
             Item i = type switch
             {
-                ItemType.Treasure => CreateItem("Book", type, 2, position),
-                ItemType.Weapon => CreateItem("Sword", type, 5, position),
-                ItemType.Armor => CreateItem("Helmet", type, 1, position),
-                ItemType.Potion => CreateItem("Apple Juice", type, 1, position)
+                ItemType.Treasure => CreateItem("Book", type, random.Next(5, 25), position), // Random quality between 5 and 25
+                ItemType.Weapon => CreateItem("Sword", type, random.Next(3, 20), position), // Random quality between 3 and 20
+                ItemType.Armor => CreateItem("Helmet", type, random.Next(3, 10), position), // Random quality between 3 and 10
+                ItemType.Potion => CreateItem("Apple Juice", type, random.Next(3, 12), position) // Random quality between 3 and 12
             };
             return i;
         }
+
 
         public static void GiveItem(PlayerCharacter character, Item item)
         {

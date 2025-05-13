@@ -68,11 +68,17 @@ namespace DungeonCrawl
 						DrawPlayer(player);
 						DrawCommands();
 						DrawInfo(player, monsters, items, messages);
-						// Draw map
-						// Draw information
-						// Wait for player command
-						// Process player command
-						while (true)
+                        // Draw map
+                        // Draw information
+                        // Wait for player command
+                        // Process player command
+
+                        if (player.gold >= 400)
+                        {
+                            state = GameState.Victory;
+                            break;
+                        }
+                        while (true)
 						{
 							messages.Clear();
 							PlayerTurnResult result = DoPlayerTurn(currentLevel, player, monsters, items, dirtyTiles, messages);
@@ -221,6 +227,18 @@ namespace DungeonCrawl
 
                         DrawInfo(player, monsters, items, messages);
                         break;
+                    case GameState.Victory:
+                        Console.Clear();
+                        Console.SetCursorPosition(Console.WindowWidth / 2 - 10, Console.WindowHeight / 2);
+                        Print("CONGRATULATIONS!", ConsoleColor.Green);
+                        Console.SetCursorPosition(Console.WindowWidth / 2 - 15, Console.WindowHeight / 2 + 1);
+                        Print($"You have gathered {player.gold} gold and won the game!", ConsoleColor.Yellow);
+                        Console.SetCursorPosition(Console.WindowWidth / 2 - 10, Console.WindowHeight / 2 + 2);
+                        Print("Press any key to exit.", ConsoleColor.Gray);
+                        Console.ReadKey();
+                        state = GameState.Quit;
+                        break;
+
 
 
                 }
@@ -512,35 +530,42 @@ namespace DungeonCrawl
 			return PlayerTurnResult.BackToGame;
 		}
 
-		
 
-		static bool DoPlayerTurnVsEnemies(PlayerCharacter character, List<Monster> enemies, Vector2 destinationPlace, List<string> messages)
-		{
-			// Check enemies
-			bool hitEnemy = false;
-			Monster toRemoveMonster = null;
-			foreach (Monster enemy in enemies)
-			{
-				if (enemy.position == destinationPlace)
-				{
+
+        static bool DoPlayerTurnVsEnemies(PlayerCharacter character, List<Monster> enemies, Vector2 destinationPlace, List<string> messages)
+        {
+            // Check enemies
+            bool hitEnemy = false;
+            Monster toRemoveMonster = null;
+            foreach (Monster enemy in enemies)
+            {
+                if (enemy.position == destinationPlace)
+                {
                     int damage = PlayerCharacter.GetCharacterDamage(character);
-                    messages.Add($"You hit {enemy.name} for {damage}!");
-					enemy.hitpoints -= damage;
-					hitEnemy = true;
-					if (enemy.hitpoints <= 0)
-					{
-						toRemoveMonster = enemy;
-					}
-				}
-			}
-			if (toRemoveMonster != null)
-			{
-				enemies.Remove(toRemoveMonster);
-			}
-			return hitEnemy;
-		}
+                    messages.Add($"You hit {enemy.name} for {damage} damage!");
+                    enemy.hitpoints -= damage;
+                    hitEnemy = true;
 
-		static bool DoPlayerTurnVsItems(PlayerCharacter character, List<Item> items, Vector2 destinationPlace, List<string> messages)
+                    if (enemy.hitpoints > 0)
+                    {
+                        // Add a message showing the enemy's remaining health
+                        messages.Add($"{enemy.name} has {enemy.hitpoints} HP left.");
+                    }
+                    else
+                    {
+                        toRemoveMonster = enemy;
+                        messages.Add($"You killed {enemy.name}!");
+                    }
+                }
+            }
+            if (toRemoveMonster != null)
+            {
+                enemies.Remove(toRemoveMonster);
+            }
+            return hitEnemy;
+        }
+
+        static bool DoPlayerTurnVsItems(PlayerCharacter character, List<Item> items, Vector2 destinationPlace, List<string> messages)
 		{
 			// Check items
 			Item toRemoveItem = null;

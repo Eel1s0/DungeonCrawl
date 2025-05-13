@@ -22,9 +22,9 @@ namespace DungeonCrawl
 
             // Initialize character properties.
             character.name = "";                  // Character name, to be set by user input.
-            character.hitpoints = 150;             // Starting health points.
+            character.hitpoints = 50;             // Starting health points.
             character.maxHitpoints = character.hitpoints; // Maximum HP set to the same as starting HP.
-            character.gold = 100;                  // Start with no gold.
+            character.gold = 0;                  // Start with no gold.
             character.weapon = null;             // No weapon equipped initially.
             character.armor = null;              // No armor equipped initially.
             character.inventory = new List<Item>(); // Empty inventory for items.
