@@ -74,7 +74,7 @@ namespace DungeonCrawl
                         // Wait for player command
                         // Process player command
 
-                        if (player.gold >= 400)
+                        if (player.gold >= 1000)
                         {
                             state = GameState.Victory;
                             break;
