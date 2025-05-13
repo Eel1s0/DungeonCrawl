@@ -44,7 +44,7 @@ namespace DungeonCrawl
 					case GameState.CharacterCreation:
                         // Character creation screen
                         player = PlayerCharacter.CreateCharacter();
-                        InitializeQuests(player);
+                        InitializeQuests(player, currentLevelNumber);
                         Console.CursorVisible = false;
 						Console.Clear();
 
@@ -109,6 +109,7 @@ namespace DungeonCrawl
 								Map.PlacePlayerToMap(player, currentLevel);
 								Map.PlaceStairsToMap(currentLevel);
                                 trader.RestockInventory(random, currentLevelNumber);
+                                InitializeQuests(player, currentLevelNumber);
                                 Console.Clear();
 								break;
 							}
@@ -573,11 +574,24 @@ namespace DungeonCrawl
             }
         }
 
-        static void InitializeQuests(PlayerCharacter player)
+        static void InitializeQuests(PlayerCharacter player, int level)
         {
-            player.ActiveQuests.Add(new Quest("Defeat 5 Goblins", 5, p => p.gold += 50));
-            player.ActiveQuests.Add(new Quest("Collect 3 Potions", 3, p => p.hitpoints += 10));
+            player.ActiveQuests.Clear(); // Clear previous quests
+
+            Random random = new Random();
+            Quest newQuest = level switch
+            {
+                1 => new Quest("Defeat 5 Goblins", 5, p => p.gold += 50),
+                2 => new Quest("Collect 3 Potions", 3, p => p.hitpoints += 10),
+                3 => new Quest("Defeat 3 Orcs", 3, p => p.gold += 100),
+                4 => new Quest("Find 2 Treasures", 2, p => p.gold += 150),
+                5 => new Quest("Defeat the Dragon", 1, p => p.gold += 500),
+                _ => new Quest($"Survive Level {level}", 1, p => p.hitpoints += 20) // Default quest for higher levels
+            };
+
+            player.ActiveQuests.Add(newQuest);
         }
+
 
 
 
@@ -622,44 +636,56 @@ namespace DungeonCrawl
         }
 
 
-        static bool DoPlayerTurnVsItems(PlayerCharacter character, List<Item> items, Vector2 destinationPlace, List<string> messages)
-		{
-			// Check items
-			Item toRemoveItem = null;
-			foreach (Item item in items)
-			{
-				if (item.position == destinationPlace)
-				{
-					string itemMessage = $"You find a ";
-					switch (item.type)
-					{
-						case ItemType.Armor:
-							itemMessage += $"{item.name}, it fits you well";
-							break;
-						case ItemType.Weapon:
-							itemMessage += $"{item.name} to use in battle";
-							break;
-						case ItemType.Potion:
-							itemMessage += $"potion of {item.name}";
-							break;
-						case ItemType.Treasure:
-							itemMessage += $"valuable {item.name} and get {item.quality} gold!";
-							break;
-					};
-					messages.Add(itemMessage);
-					toRemoveItem = item;
-                    Item.GiveItem(character, item);
-                    break;
-				}
-			}
-			if (toRemoveItem != null)
-			{
-				items.Remove(toRemoveItem);
-			}
-			return false;
-		}
 
-		static PlayerTurnResult DoPlayerTurn(Map level, PlayerCharacter character, List<Monster> enemies, List<Item> items, List<int> dirtyTiles, List<string> messages)
+        static bool DoPlayerTurnVsItems(PlayerCharacter character, List<Item> items, Vector2 destinationPlace, List<string> messages)
+        {
+            // Check items
+            Item toRemoveItem = null;
+            foreach (Item item in items)
+            {
+                if (item.position == destinationPlace)
+                {
+                    string itemMessage = $"You find a ";
+                    switch (item.type)
+                    {
+                        case ItemType.Armor:
+                            itemMessage += $"{item.name}, it fits you well";
+                            break;
+                        case ItemType.Weapon:
+                            itemMessage += $"{item.name} to use in battle";
+                            break;
+                        case ItemType.Potion:
+                            itemMessage += $"potion of {item.name}";
+                            break;
+                        case ItemType.Treasure:
+                            itemMessage += $"valuable {item.name} and get {item.quality} gold!";
+                            break;
+                    }
+                    ;
+                    messages.Add(itemMessage);
+                    toRemoveItem = item;
+                    Item.GiveItem(character, item);
+
+                    // Update quest progress for collecting specific items
+                    foreach (Quest quest in character.ActiveQuests)
+                    {
+                        if (quest.Description.Contains("Collect") && quest.Description.Contains(item.type.ToString()))
+                        {
+                            quest.UpdateProgress(1);
+                        }
+                    }
+                    break;
+                }
+            }
+            if (toRemoveItem != null)
+            {
+                items.Remove(toRemoveItem);
+            }
+            return false;
+        }
+
+
+        static PlayerTurnResult DoPlayerTurn(Map level, PlayerCharacter character, List<Monster> enemies, List<Item> items, List<int> dirtyTiles, List<string> messages)
 		{
 			Vector2 playerMove = new Vector2(0, 0);
 			while (true)
